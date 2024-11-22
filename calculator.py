@@ -1,6 +1,77 @@
 import tkinter as tk
 from tkinter import ttk
 import math
+from collections import deque
+
+class HistoryWindow:
+    def __init__(self, history):
+        self.window = tk.Toplevel()
+        self.window.title("Calculation History")
+        self.window.geometry("300x400")
+        self.window.configure(bg="#ffffff")
+        
+        # Style configuration
+        style = ttk.Style()
+        
+        # Configure styles for history window
+        style.configure(
+            "History.TLabel",
+            background="#ffffff",
+            foreground="#2c3e50",
+            font=('SF Pro Display', 14),
+            padding=(10, 5)
+        )
+        
+        style.configure(
+            "HistoryTitle.TLabel",
+            background="#ffffff",
+            foreground="#2c3e50",
+            font=('SF Pro Display', 16, 'bold'),
+            padding=(10, 10)
+        )
+        
+        # Title
+        title = ttk.Label(
+            self.window,
+            text="Recent Calculations",
+            style="HistoryTitle.TLabel"
+        )
+        title.pack(pady=(20, 10))
+        
+        # History items container
+        history_frame = ttk.Frame(self.window)
+        history_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        # Display history items
+        if not history:
+            no_history = ttk.Label(
+                history_frame,
+                text="No calculations yet",
+                style="History.TLabel"
+            )
+            no_history.pack(pady=20)
+        else:
+            for calc, result in history:
+                item_frame = ttk.Frame(history_frame)
+                item_frame.pack(fill="x", pady=5)
+                
+                calc_label = ttk.Label(
+                    item_frame,
+                    text=calc,
+                    style="History.TLabel",
+                    wraplength=250
+                )
+                calc_label.pack(anchor="w")
+                
+                result_label = ttk.Label(
+                    item_frame,
+                    text=f"= {result}",
+                    style="History.TLabel"
+                )
+                result_label.pack(anchor="w")
+                
+                separator = ttk.Separator(history_frame, orient="horizontal")
+                separator.pack(fill="x", pady=5)
 
 class Calculator:
     def __init__(self, root):
@@ -77,10 +148,30 @@ class Calculator:
             relief="flat"
         )
         
+        # Configure history button style
+        style.configure(
+            "History.TButton",
+            padding=(8, 4),
+            font=('SF Pro Display', 12),
+            background="#ffffff",
+            foreground="#95a5a6",
+            borderwidth=0,
+            relief="flat"
+        )
+        
         # Display frames
         display_frame = ttk.Frame(root, style="Display.TFrame")
         display_frame.grid(row=0, column=0, columnspan=4, sticky="nsew", padx=20, pady=(40, 20))
         display_frame.grid_columnconfigure(0, weight=1)
+        
+        # Add history button to the top right
+        history_btn = ttk.Button(
+            display_frame,
+            text="History",
+            command=self.show_history,
+            style="History.TButton"
+        )
+        history_btn.grid(row=0, column=3, sticky="e", pady=(0, 10))
         
         # Process display (shows ongoing calculation)
         self.process_var = tk.StringVar()
@@ -91,7 +182,7 @@ class Calculator:
             style="Process.TLabel",
             anchor="e"
         )
-        self.process_label.grid(row=0, column=0, sticky="ew")
+        self.process_label.grid(row=0, column=0, columnspan=3, sticky="ew")
         
         # Result display
         self.display_var = tk.StringVar()
@@ -103,7 +194,10 @@ class Calculator:
             font=('SF Pro Display', 40),
             style="Result.TEntry"
         )
-        display.grid(row=1, column=0, sticky="nsew", ipady=20)
+        display.grid(row=1, column=0, columnspan=4, sticky="nsew", ipady=20)
+        
+        # Add history storage
+        self.history = deque(maxlen=10)
         
         # Buttons with updated styling
         buttons = [
@@ -157,7 +251,7 @@ class Calculator:
         self.previous_number = None
         self.operation = None
         self.start_new_number = True
-        
+    
     def button_click(self, value):
         if value.isdigit() or value == '.':
             if self.start_new_number:
@@ -193,7 +287,7 @@ class Calculator:
             self.operation = None
             self.start_new_number = True
             self.display_var.set("0")
-            self.process_var.set("")  # Clear process display
+            self.process_var.set("")
             
         elif value == '±':
             if self.current_number.startswith('-'):
@@ -208,6 +302,10 @@ class Calculator:
             self.display_var.set(self.current_number)
             if self.previous_number is not None:
                 self.process_var.set(f"{self.previous_number} {self.operation} {self.current_number}")
+    
+    def show_history(self):
+        """Show the history window"""
+        HistoryWindow(list(self.history))
     
     def calculate(self):
         if self.operation is None or self.previous_number is None:
@@ -238,6 +336,11 @@ class Calculator:
                         result = round(result, 8)
                 self.current_number = str(result)
                 self.display_var.set(self.current_number)
+                
+                # Add to history
+                calculation = f"{previous} {self.operation} {current}"
+                self.history.appendleft((calculation, result))
+                
         except Exception as e:
             self.display_var.set("Error")
             self.current_number = "0"
