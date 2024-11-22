@@ -164,14 +164,14 @@ class Calculator:
         display_frame.grid(row=0, column=0, columnspan=4, sticky="nsew", padx=20, pady=(40, 20))
         display_frame.grid_columnconfigure(0, weight=1)
         
-        # Add history button to the top right
+        # Add history button to the top left
         history_btn = ttk.Button(
             display_frame,
             text="History",
             command=self.show_history,
             style="History.TButton"
         )
-        history_btn.grid(row=0, column=3, sticky="e", pady=(0, 10))
+        history_btn.grid(row=0, column=0, sticky="w", pady=(0, 10))
         
         # Process display (shows ongoing calculation)
         self.process_var = tk.StringVar()
@@ -182,7 +182,7 @@ class Calculator:
             style="Process.TLabel",
             anchor="e"
         )
-        self.process_label.grid(row=0, column=0, columnspan=3, sticky="ew")
+        self.process_label.grid(row=0, column=1, columnspan=3, sticky="ew")
         
         # Result display
         self.display_var = tk.StringVar()
